@@ -36,7 +36,7 @@ import java.util.Locale;
 public class MyListener implements MeasurementListener {
 
     public static final double speed_light = 2.99792458e8;
-    public static final String unknown_phase = "unkn";
+    public static final String unknown_phase = "unkno";
     private static final String TAG = "LISTENER";
     private int leapseconds = 18;
 
@@ -328,7 +328,7 @@ public class MyListener implements MeasurementListener {
             // Full phase 360 degree
             double deltaRemainderPartInDegrees = deltaRemainderPart * 360;
             //nSatellite.PHASE = String.format(Locale.ENGLISH, "%+2.0f%%", deltaRemainderPartInPercent);
-            nSatellite.PHASE = String.format(Locale.ENGLISH, "%+03.0f\u00B0", deltaRemainderPartInDegrees);
+            nSatellite.PHASE = String.format(Locale.ENGLISH, "%+04.0f\u00B0", deltaRemainderPartInDegrees);
         } else {
             nSatellite.PHASE = unknown_phase;
         }

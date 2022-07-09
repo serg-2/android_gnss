@@ -321,8 +321,7 @@ public class MyListener implements MeasurementListener {
         if (((byte) measurement.getAccumulatedDeltaRangeState() & 0b00000001) == 1) {
             double wavelength = speed_light / measurement.getCarrierFrequencyHz();
             double fullDelta = measurement.getPseudorangeRateMetersPerSecond();
-            double deltaIntegerPart = Math.floor(fullDelta / wavelength);
-            double deltaRemainderPart = fullDelta - (deltaIntegerPart * wavelength);
+            double deltaRemainderPart = (fullDelta / wavelength) % 1;
             nSatellite.PhaseShift = deltaRemainderPart;
             // Full phase 100%
             // double deltaRemainderPartInPercent = deltaRemainderPart * 100;
@@ -340,14 +339,12 @@ public class MyListener implements MeasurementListener {
             //Log.e("Satellite", "tRxSeconds: "+ tRxNanos+ " getReceivedSvTimeNanos(): " + measurement.getReceivedSvTimeNanos());
             //Log.e("Satellite" , String.format("Difference: %5.3f сек", prSeconds));
             //Log.e("Satellite" , String.format("PseudoRange: %7.0f км", prm / 1000));
-            // Log.e("Satellite", String.format("Frequency: %f", Math.floor(measurement.getCarrierFrequencyHz()*1e-3)));
         }
 
     }
 
     private String getBandName(int constellationType, float carrierFrequencyHz) {
         // Frequency in kHz
-        //int frequency = (int) Math.floor(carrierFrequencyHz * 1e-3);
         int frequency = (int) Math.round(carrierFrequencyHz * 1e-3);
         switch (constellationType) {
             case GnssStatus.CONSTELLATION_GPS:

@@ -1,5 +1,7 @@
 package com.example.pseudoranges;
 
+import static com.example.pseudoranges.MyListener.unknown_phase;
+
 public class Satellite {
 
     public double TimeOffsetNanos;
@@ -46,7 +48,7 @@ public class Satellite {
 
     // Phase
     public double PhaseShift;
-    public String PHASE = "unk";
+    public String PHASE = unknown_phase;
 
     public long AgeData;
     public boolean Valid;

@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         if (cbFilter.isChecked()) {
             filterTime.postValue(9);
         } else {
-            filterTime.postValue(1000);
+            filterTime.postValue(0);
         }
     }
 

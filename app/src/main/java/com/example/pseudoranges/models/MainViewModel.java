@@ -101,8 +101,10 @@ public class MainViewModel extends AndroidViewModel {
                     // Age Seconds
                     long age = (System.currentTimeMillis() - satelliteEntry.getValue().AgeData) / 1000;
                     // Skip old values
-                    if (age > filterTime) {
-                        continue;
+                    if (filterTime != 0) {
+                        if (age > filterTime) {
+                            continue;
+                        }
                     }
                     builder.append(String.format(
                             Locale.ENGLISH,

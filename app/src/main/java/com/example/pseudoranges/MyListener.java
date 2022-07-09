@@ -317,33 +317,21 @@ public class MyListener implements MeasurementListener {
         nSatellite.BandName = bandName;
 
         // PhaseShift calculation -----------------------------------------------
-        // check valid deltarange
-        boolean deltaRangeValid = false;
-        // measurement.getAccumulatedDeltaRangeState() != GnssMeasurement.ADR_STATE_VALID
         if (((byte) measurement.getAccumulatedDeltaRangeState() & 0b00000001) == 1) {
-            deltaRangeValid = true;
-        }
-        nSatellite.DeltaNew = measurement.getAccumulatedDeltaRangeMeters();
-
-        // Already started measure
-        if (nSatellite.PhaseMeasureStarted) {
-            // Check need to stop measure?
-            if (!deltaRangeValid) {
-                nSatellite.PhaseMeasureStarted = false;
-                nSatellite.PHASE = "unk";
-            }
-            // Calculate
-            double deltaDiff = nSatellite.DeltaNew - nSatellite.DeltaOld;
-            // wavelength in meters
             double wavelength = speed_light / measurement.getCarrierFrequencyHz();
-            nSatellite.PhaseShift = (int) Math.round((deltaDiff / wavelength) * 100);
-            nSatellite.PHASE = String.format(Locale.ENGLISH, "%3d%%", nSatellite.PhaseShift);
+            double fullDelta = measurement.getPseudorangeRateMetersPerSecond();
+            double deltaIntegerPart = Math.floor(fullDelta / wavelength);
+            double deltaRemainderPart = fullDelta - (deltaIntegerPart * wavelength);
+            nSatellite.PhaseShift = deltaRemainderPart;
+            // Full phase 100%
+            // double deltaRemainderPartInPercent = deltaRemainderPart * 100;
+            // Full phase 360 degree
+            double deltaRemainderPartInDegrees = deltaRemainderPart * 360;
+            //nSatellite.PHASE = String.format(Locale.ENGLISH, "%+2.0f%%", deltaRemainderPartInPercent);
+            nSatellite.PHASE = String.format(Locale.ENGLISH, "%+3.0f\u00B0", deltaRemainderPartInDegrees);
         } else {
-            if (deltaRangeValid) {
-                nSatellite.PhaseMeasureStarted = true;
-            }
+            nSatellite.PHASE = "unk";
         }
-        nSatellite.DeltaOld = nSatellite.DeltaNew;
         // End PhaseShift calculation ---------------------------------------------
 
         // Log features

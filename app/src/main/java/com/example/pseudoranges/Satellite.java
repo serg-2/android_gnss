@@ -45,10 +45,7 @@ public class Satellite {
     public String BandName;
 
     // Phase
-    public boolean PhaseMeasureStarted = false;
-    public double DeltaOld;
-    public double DeltaNew;
-    public int PhaseShift;
+    public double PhaseShift;
     public String PHASE = "unk";
 
     public long AgeData;

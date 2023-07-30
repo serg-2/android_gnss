@@ -1,6 +1,7 @@
 package com.example.pseudoranges.models;
 
 import android.app.Application;
+import android.location.GnssMeasurement;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -19,14 +20,22 @@ public class MainViewModel extends AndroidViewModel {
     // private MutableLiveData<String> tmpString = new MutableLiveData<>();
     private Map<String, Map<Integer, Map<String, Satellite>>> measurement = new LinkedHashMap<>();
     private Clock clock = new Clock();
+    private int measurementState = 0;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
-
     }
 
     public Clock gc() {
         return clock;
+    }
+
+    public int getState() {
+        return measurementState;
+    }
+
+    public void setState(int newState) {
+        measurementState = newState;
     }
 
     public Map<String, Map<Integer, Map<String, Satellite>>> gm() {
@@ -82,7 +91,38 @@ public class MainViewModel extends AndroidViewModel {
                 (System.currentTimeMillis() - clock.AgeData) / 1000));
 
         // Log.e("Clock", "Full Bias Nano: " + clock.FullBiasNanos + " Time Nanos: " + clock.TimeNanos + " bias Nanos: " + clock.BiasNanos);
+
+        // Add getAccumulatedDeltaRangeState STATE
+        builder.append(String.format(Locale.ENGLISH,
+                "%s = %s\n",
+                "ADR State ",
+                parseAccimulatedDeltaRangeState(getState())));
+
         return builder.toString();
+    }
+
+    private String parseAccimulatedDeltaRangeState(int state) {
+        String sValue = "";
+        // ADR_STATE_UNKNOWN = 0
+        if (((byte) state) == GnssMeasurement.ADR_STATE_UNKNOWN) {
+            sValue += "ADR_STATE_UNKNOWN "; // 0
+        }
+        if (((byte) state & GnssMeasurement.ADR_STATE_VALID) == GnssMeasurement.ADR_STATE_VALID) {
+            sValue += "ADR_STATE_VALID "; // 1
+        }
+        if (((byte) state & GnssMeasurement.ADR_STATE_RESET) == GnssMeasurement.ADR_STATE_RESET) {
+            sValue += "ADR_STATE_RESET "; // 2
+        }
+        if (((byte) state & GnssMeasurement.ADR_STATE_CYCLE_SLIP) == GnssMeasurement.ADR_STATE_CYCLE_SLIP) {
+            sValue += "ADR_STATE_CYCLE_SLIP "; // 4
+        }
+        if (((byte) state & GnssMeasurement.ADR_STATE_HALF_CYCLE_RESOLVED) == GnssMeasurement.ADR_STATE_HALF_CYCLE_RESOLVED) {
+            sValue += "ADR_STATE_HALF_CYCLE_RESOLVED "; // 8
+        }
+        if (((byte) state & GnssMeasurement.ADR_STATE_HALF_CYCLE_REPORTED) == GnssMeasurement.ADR_STATE_HALF_CYCLE_REPORTED) {
+            sValue += "ADR_STATE_HALF_CYCLE_REPORTED "; // 16
+        }
+        return sValue;
     }
 
     public String toStringMeasurementMap(String filterConstellation, Integer filterTime) {

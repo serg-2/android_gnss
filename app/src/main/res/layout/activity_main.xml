@@ -10,14 +10,14 @@
         android:id="@+id/splitter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintGuide_percent=".15"
+        app:layout_constraintGuide_percent=".25"
         android:orientation="horizontal"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/splitter2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintGuide_percent=".18"
+        app:layout_constraintGuide_percent=".28"
         android:orientation="horizontal"/>
 
     <TextView

@@ -154,6 +154,9 @@ public class MyListener implements MeasurementListener {
 
         String bandName = getBandName(measurement.getConstellationType(), measurement.getCarrierFrequencyHz());
 
+        // Write measurement state to viewModel
+        activity.mainViewModel.setState(measurement.getAccumulatedDeltaRangeState());
+
         // Check Constellation exists in map
         if (!activity.mainViewModel.gm().containsKey(constellation)) {
             activity.mainViewModel.gm().put(constellation, new LinkedHashMap<>());
@@ -189,6 +192,10 @@ public class MyListener implements MeasurementListener {
             nSatellite.AccumulatedDeltaRangeState = measurement.getAccumulatedDeltaRangeState();
             nSatellite.AccumulatedDeltaRangeMeters = measurement.getAccumulatedDeltaRangeMeters();
             nSatellite.AccumulatedDeltaRangeUncertaintyMeters = measurement.getAccumulatedDeltaRangeUncertaintyMeters();
+        } else {
+            nSatellite.AccumulatedDeltaRangeState = 0;
+            nSatellite.AccumulatedDeltaRangeMeters = 0;
+            nSatellite.AccumulatedDeltaRangeUncertaintyMeters = 0;
         }
 
         // True
@@ -318,16 +325,20 @@ public class MyListener implements MeasurementListener {
         nSatellite.BandName = bandName;
 
         // PhaseShift calculation -----------------------------------------------
-        if (((byte) measurement.getAccumulatedDeltaRangeState() & 0b00000001) == 1) {
-            double wavelength = speed_light / measurement.getCarrierFrequencyHz();
-            double fullDelta = measurement.getPseudorangeRateMetersPerSecond();
-            double deltaRemainderPart = (fullDelta / wavelength) % 1;
-            nSatellite.PhaseShift = deltaRemainderPart;
-            // Full phase 100%
-            // double deltaRemainderPartInPercent = deltaRemainderPart * 100;
-            // Full phase 360 degree
-            double deltaRemainderPartInDegrees = deltaRemainderPart * 360;
-            //nSatellite.PHASE = String.format(Locale.ENGLISH, "%+2.0f%%", deltaRemainderPartInPercent);
+        // if (((byte) measurement.getAccumulatedDeltaRangeState() & 0b00000001) == 1) {
+        // if (((byte) measurement.getAccumulatedDeltaRangeState() & GnssMeasurement.ADR_STATE_VALID) == GnssMeasurement.ADR_STATE_VALID) {
+        // After some time ADR_STATE_HALF_CYCLE_REPORTED Only bit enabled. (After lock coordinate?)
+        double wavelength = speed_light / measurement.getCarrierFrequencyHz();
+        double fullDelta = measurement.getPseudorangeRateMetersPerSecond();
+        double deltaRemainderPart = (fullDelta / wavelength) % 1;
+        nSatellite.PhaseShift = deltaRemainderPart;
+        // Full phase 100%
+        // double deltaRemainderPartInPercent = deltaRemainderPart * 100;
+        // Full phase 360 degree
+        double deltaRemainderPartInDegrees = deltaRemainderPart * 360;
+        //nSatellite.PHASE = String.format(Locale.ENGLISH, "%+2.0f%%", deltaRemainderPartInPercent);
+
+        if (nSatellite.AccumulatedDeltaRangeMeters != 0) {
             nSatellite.PHASE = String.format(Locale.ENGLISH, "%+04.0f\u00B0", deltaRemainderPartInDegrees);
         } else {
             nSatellite.PHASE = unknown_phase;

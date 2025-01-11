@@ -28,7 +28,6 @@ import androidx.lifecycle.ViewModelStoreOwner;
 import com.example.pseudoranges.models.MainViewModel;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -45,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private Spinner constSpinner;
     private CheckBox cbFilter;
 
-    private GoogleApiClient mGoogleApiClient;
     private MeasurementProvider mMeasurementProvider;
     private MyListener myListener;
     public MainViewModel mainViewModel;
@@ -80,39 +78,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         constSpinner.setAdapter(adapter);
         constSpinner.setOnItemSelectedListener(this);
 
-        buildGoogleApiClient();
         requestPermissionAndSetupFragments(this);
 
         // Create the observer which updates the UI.
-        final Observer<String> tv1Observer = new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable final String newName) {
-                // Update the UI, in this case, a TextView.
-                mainTV1.setText(newName);
-            }
+        final Observer<String> tv1Observer = newName -> {
+            // Update the UI, in this case, a TextView.
+            mainTV1.setText(newName);
         };
-        final Observer<String> tv2Observer = new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable final String newName) {
-                // Update the UI, in this case, a TextView.
-                mainTV2.setText(newName);
-            }
+        final Observer<String> tv2Observer = newName -> {
+            // Update the UI, in this case, a TextView.
+            mainTV2.setText(newName);
         };
 
         tv1Text.observe(this, tv1Observer);
         tv2Text.observe(this, tv2Observer);
 
-    }
-
-    private synchronized void buildGoogleApiClient() {
-        mGoogleApiClient =
-                new GoogleApiClient.Builder(this)
-                        .enableAutoManage(this, this)
-                        .addConnectionCallbacks(this)
-                        .addOnConnectionFailedListener(this)
-                        //.addApi(ActivityRecognition.API)
-                        .addApi(LocationServices.API)
-                        .build();
     }
 
     private void requestPermissionAndSetupFragments(final Activity activity) {
@@ -137,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mMeasurementProvider =
                 new MeasurementProvider(
                         getApplicationContext(),
-                        mGoogleApiClient,
                         myListener);
         mMeasurementProvider.registerMeasurements();
     }
@@ -182,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         // Timer
         if (!timerState) {
             timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
+            timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     updateScreen();

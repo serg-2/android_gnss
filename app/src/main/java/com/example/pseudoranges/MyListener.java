@@ -38,7 +38,7 @@ public class MyListener implements MeasurementListener {
     public static final double speed_light = 2.99792458e8;
     public static final String unknown_phase = "unkno";
     private static final String TAG = "LISTENER";
-    private int leapseconds = 18;
+    private final int leapSeconds = 18;
 
     private MainActivity activity;
 
@@ -247,7 +247,7 @@ public class MyListener implements MeasurementListener {
         // GLONASS
         if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GLONASS) {
             double tRxSeconds_GLO = tRxSeconds % 86400;
-            double tTxSeconds_GLO = tTxSeconds - 10800 + leapseconds;
+            double tTxSeconds_GLO = tTxSeconds - 10800 + leapSeconds;
             if (tTxSeconds_GLO < 0) {
                 tTxSeconds_GLO = tTxSeconds_GLO + 86400;
             }
@@ -258,7 +258,7 @@ public class MyListener implements MeasurementListener {
         // BEIDOU
         if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_BEIDOU) {
             double tRxSeconds_BDS = tRxSeconds;
-            double tTxSeconds_BDS = tTxSeconds + leapseconds - 4;
+            double tTxSeconds_BDS = tTxSeconds + leapSeconds - 4;
             if (tTxSeconds_BDS > 604800) {
                 tTxSeconds_BDS = tTxSeconds_BDS - 604800;
             }
@@ -269,7 +269,7 @@ public class MyListener implements MeasurementListener {
         double prSeconds = tRxSeconds - tTxSeconds;
         nSatellite.PRTIME_OLD = prSeconds;
 
-        boolean iRollover = prSeconds > 604800 / 2;
+        boolean iRollover = prSeconds > 604800d / 2;
         if (iRollover) {
             double delS = Math.round(prSeconds / 604800) * 604800;
             double prS = prSeconds - delS;
@@ -359,27 +359,24 @@ public class MyListener implements MeasurementListener {
         int frequency = (int) Math.round(carrierFrequencyHz * 1e-3);
         switch (constellationType) {
             case GnssStatus.CONSTELLATION_GPS:
-                switch (frequency) {
-                    case 1575420:
-                        return "L1";
-                    case 1227600:
-                        return "L2";
-                    case 1176450:
-                        return "L5";
-                    default:
+                return switch (frequency) {
+                    case 1575420 -> "L1";
+                    case 1227600 -> "L2";
+                    case 1176450 -> "L5";
+                    default -> {
                         Log.e(TAG, "UNKNOWN GPS Frequency!" + frequency);
-                        return "U_GPS";
-                }
+                        yield "U_GPS";
+                    }
+                };
             case GnssStatus.CONSTELLATION_SBAS:
-                switch (frequency) {
-                    case 1575420:
-                        return "L1";
-                    case 1176450:
-                        return "L5";
-                    default:
+                return switch (frequency) {
+                    case 1575420 -> "L1";
+                    case 1176450 -> "L5";
+                    default -> {
                         Log.e(TAG, "UNKNOWN SBAS Frequency!" + frequency);
-                        return "U_SBAS";
-                }
+                        yield "U_SBAS";
+                    }
+                };
             case GnssStatus.CONSTELLATION_GLONASS:
                 // L1 1598062.5 kHz - 1605375 kHz
                 if (frequency >= 1598062 && frequency <= 1605375) {
@@ -392,47 +389,37 @@ public class MyListener implements MeasurementListener {
                     return "U_GLO";
                 }
             case GnssStatus.CONSTELLATION_QZSS:
-                switch (frequency) {
-                    case 1575420:
-                        return "L1";
-                    case 1227600:
-                        return "L2";
-                    case 1176450:
-                        return "L5";
-                    case 1278750:
-                        return "L6";
-                    default:
+                return switch (frequency) {
+                    case 1575420 -> "L1";
+                    case 1227600 -> "L2";
+                    case 1176450 -> "L5";
+                    case 1278750 -> "L6";
+                    default -> {
                         Log.e(TAG, "UNKNOWN QZSS Frequency!" + frequency);
-                        return "U_QZSS";
-                }
+                        yield "U_QZSS";
+                    }
+                };
             case GnssStatus.CONSTELLATION_BEIDOU:
-                switch (frequency) {
-                    case 1561098:
-                    case 1575420:
-                        return "L1";
-                    case 1207140:
-                    case 1176450:
-                        return "L2";
-                    case 1268520:
-                        return "L3";
-                    default:
+                return switch (frequency) {
+                    case 1561098, 1575420 -> "L1";
+                    case 1207140, 1176450 -> "L2";
+                    case 1268520 -> "L3";
+                    default -> {
                         Log.e(TAG, "UNKNOWN BeiDou Frequency!" + frequency);
-                        return "U_BeiDou";
-                }
+                        yield "U_BeiDou";
+                    }
+                };
             case GnssStatus.CONSTELLATION_GALILEO:
-                switch (frequency) {
-                    case 1575420:
-                        return "L1";
-                    case 1176450:
-                        return "5a";
-                    case 1207140:
-                        return "5b";
-                    case 1278750:
-                        return "L6";
-                    default:
+                return switch (frequency) {
+                    case 1575420 -> "L1";
+                    case 1176450 -> "5a";
+                    case 1207140 -> "5b";
+                    case 1278750 -> "L6";
+                    default -> {
                         Log.e(TAG, "UNKNOWN Galileo Frequency!" + frequency);
-                        return "U_Galileo";
-                }
+                        yield "U_Galileo";
+                    }
+                };
             default:
                 return "UNKNOWN";
         }
@@ -606,7 +593,12 @@ public class MyListener implements MeasurementListener {
 
     @Override
     public void onNmeaReceived(long timestamp, String s) {
-        logNmeaEvent(String.format("onNmeaReceived: timestamp=%d, %s", timestamp, s));
+        logNmeaEvent(String.format(
+                Locale.ENGLISH,
+                "onNmeaReceived: timestamp=%d, %s",
+                timestamp,
+                s
+        ));
     }
 
     @Override
@@ -627,42 +619,31 @@ public class MyListener implements MeasurementListener {
     }
 
     private String locationStatusToString(int status) {
-        switch (status) {
-            case LocationProvider.AVAILABLE:
-                return "AVAILABLE";
-            case LocationProvider.OUT_OF_SERVICE:
-                return "OUT_OF_SERVICE";
-            case LocationProvider.TEMPORARILY_UNAVAILABLE:
-                return "TEMPORARILY_UNAVAILABLE";
-            default:
-                return "<Unknown>";
-        }
+        return switch (status) {
+            case LocationProvider.AVAILABLE -> "AVAILABLE";
+            case LocationProvider.OUT_OF_SERVICE -> "OUT_OF_SERVICE";
+            case LocationProvider.TEMPORARILY_UNAVAILABLE -> "TEMPORARILY_UNAVAILABLE";
+            default -> "<Unknown>";
+        };
     }
 
     private String gnssMeasurementsStatusToString(int status) {
-        switch (status) {
-            case GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED:
-                return "NOT_SUPPORTED";
-            case GnssMeasurementsEvent.Callback.STATUS_READY:
-                return "READY";
-            case GnssMeasurementsEvent.Callback.STATUS_LOCATION_DISABLED:
-                return "GNSS_LOCATION_DISABLED";
-            default:
-                return "<Unknown>";
-        }
+        return switch (status) {
+            case GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED -> "NOT_SUPPORTED";
+            case GnssMeasurementsEvent.Callback.STATUS_READY -> "READY";
+            case GnssMeasurementsEvent.Callback.STATUS_LOCATION_DISABLED ->
+                    "GNSS_LOCATION_DISABLED";
+            default -> "<Unknown>";
+        };
     }
 
     private String getGnssNavigationMessageStatus(int status) {
-        switch (status) {
-            case GnssNavigationMessage.STATUS_UNKNOWN:
-                return "Status Unknown";
-            case GnssNavigationMessage.STATUS_PARITY_PASSED:
-                return "READY";
-            case GnssNavigationMessage.STATUS_PARITY_REBUILT:
-                return "Status Parity Rebuilt";
-            default:
-                return "<Unknown>";
-        }
+        return switch (status) {
+            case GnssNavigationMessage.STATUS_UNKNOWN -> "Status Unknown";
+            case GnssNavigationMessage.STATUS_PARITY_PASSED -> "READY";
+            case GnssNavigationMessage.STATUS_PARITY_REBUILT -> "Status Parity Rebuilt";
+            default -> "<Unknown>";
+        };
     }
 
     private String gnssStatusToString(GnssStatus gnssStatus) {
@@ -690,22 +671,15 @@ public class MyListener implements MeasurementListener {
     }
 
     private String getConstellationName(int id) {
-        switch (id) {
-            case 1:
-                return "GPS";
-            case 2:
-                return "SBAS";
-            case 3:
-                return "GLONASS";
-            case 4:
-                return "QZSS";
-            case 5:
-                return "BEIDOU";
-            case 6:
-                return "GALILEO";
-            default:
-                return "UNKNOWN";
-        }
+        return switch (id) {
+            case 1 -> "GPS";
+            case 2 -> "SBAS";
+            case 3 -> "GLONASS";
+            case 4 -> "QZSS";
+            case 5 -> "BEIDOU";
+            case 6 -> "GALILEO";
+            default -> "UNKNOWN";
+        };
     }
 
 }

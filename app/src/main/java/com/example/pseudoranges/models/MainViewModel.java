@@ -44,16 +44,13 @@ public class MainViewModel extends AndroidViewModel {
 
     public String toStringClockClass() {
         final String format = "%-4s = %s\n";
-        StringBuilder builder = new StringBuilder();
         DecimalFormat numberFormat = new DecimalFormat("#0.000");
 
-        builder.append(String.format(format, "TimeNanos", clock.TimeNanos));
-
-        builder.append(
+        String builder = String.format(format, "TimeNanos", clock.TimeNanos) +
                 String.format(
                         format,
                         "HardwareClockDiscontinuityCount",
-                        clock.HardwareClockDiscontinuityCount));
+                        clock.HardwareClockDiscontinuityCount) +
 
         /* Not interesting
         builder.append(String.format(format, "LeapSecond", clock.LeapSecond));
@@ -71,37 +68,34 @@ public class MainViewModel extends AndroidViewModel {
                         "BiasUncertaintyNanos",
                         numberFormat.format(clock.BiasUncertaintyNanos)));
          */
-        builder.append(
                 String.format(
                         format,
                         "DriftNanosPerSecond",
-                        numberFormat.format(clock.DriftNanosPerSecond)));
-
-        builder.append(
+                        numberFormat.format(clock.DriftNanosPerSecond)) +
                 String.format(
                         format,
                         "DriftUncertaintyNanosPerSecond",
-                        numberFormat.format(clock.DriftUncertaintyNanosPerSecond)));
+                        numberFormat.format(clock.DriftUncertaintyNanosPerSecond)) +
 
-        //builder.append("\n");
+                //builder.append("\n");
 
-        builder.append(String.format(Locale.ENGLISH,
-                "%s = %d\n",
-                "Age",
-                (System.currentTimeMillis() - clock.AgeData) / 1000));
+                String.format(Locale.ENGLISH,
+                        "%s = %d\n",
+                        "Age",
+                        (System.currentTimeMillis() - clock.AgeData) / 1000) +
 
-        // Log.e("Clock", "Full Bias Nano: " + clock.FullBiasNanos + " Time Nanos: " + clock.TimeNanos + " bias Nanos: " + clock.BiasNanos);
+                // Log.e("Clock", "Full Bias Nano: " + clock.FullBiasNanos + " Time Nanos: " + clock.TimeNanos + " bias Nanos: " + clock.BiasNanos);
 
-        // Add getAccumulatedDeltaRangeState STATE
-        builder.append(String.format(Locale.ENGLISH,
-                "%s = %s\n",
-                "ADR State ",
-                parseAccimulatedDeltaRangeState(getState())));
+                // Add getAccumulatedDeltaRangeState STATE
+                String.format(Locale.ENGLISH,
+                        "%s = %s\n",
+                        "ADR State ",
+                        parseAccumulatedDeltaRangeState(getState()));
 
-        return builder.toString();
+        return builder;
     }
 
-    private String parseAccimulatedDeltaRangeState(int state) {
+    private String parseAccumulatedDeltaRangeState(int state) {
         String sValue = "";
         // ADR_STATE_UNKNOWN = 0
         if (((byte) state) == GnssMeasurement.ADR_STATE_UNKNOWN) {
@@ -157,6 +151,5 @@ public class MainViewModel extends AndroidViewModel {
         }
         return builder.toString();
     }
-
 
 }

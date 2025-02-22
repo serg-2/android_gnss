@@ -5,7 +5,7 @@ import static com.example.pseudoranges.ConstellationEnum.*;
 public abstract class NMEAHelper {
 
     public static String parseNmea(String s) {
-        // GP- GPS, GL - GLONAS, GA - galileo, BD - Beidou, GQ - qznss, GN - different
+        // GP- GPS, GL - GLONAS, GA - galileo, GB(BD) - Beidou, GQ - qznss, GN - different
 
         // GGA - содержит данные о последнем местоположении.
         // GSV - Строка с идентификатором GSV содержит информацию о всех наблюдаемых спутниках.
@@ -20,7 +20,7 @@ public abstract class NMEAHelper {
             case "GP" -> GPS;
             case "GL" -> GLONASS;
             case "GA" ->GALILEO;
-            case "GB" -> BEIDOU;
+            case "GB", "BD" -> BEIDOU;
             case "GQ" -> QZSS;
             default -> UNKNOWN;
         };

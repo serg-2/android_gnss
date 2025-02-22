@@ -28,5 +28,8 @@ public class Clock {
     // Additional
     public double TRxNanos;
     public long AgeData;
+
+    // New
+    public int ReceivedMeasurements;
 }
 

@@ -34,15 +34,11 @@ public interface MeasurementListener {
   void onProviderDisabled(String provider);
   /** @see LocationListener#onLocationChanged(Location) */
   void onLocationChanged(Location location);
-  /** @see LocationListener#onStatusChanged(String, int, Bundle) */
-  void onLocationStatusChanged(String provider, int status, Bundle extras);
   /**
    * @see GnssMeasurementsEvent.Callback#
    *     onGnssMeasurementsReceived(GnssMeasurementsEvent)
    */
   void onGnssMeasurementsReceived(GnssMeasurementsEvent event);
-  /** @see GnssMeasurementsEvent.Callback#onStatusChanged(int) */
-  void onGnssMeasurementsStatusChanged(int status);
   /** @see GnssNavigationMessage.Callback# onGnssNavigationMessageReceived(GnssNavigationMessage) */
   void onGnssNavigationMessageReceived(GnssNavigationMessage event);
   /** @see GnssNavigationMessage.Callback#onStatusChanged(int) */

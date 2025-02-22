@@ -24,7 +24,6 @@ import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationManager;
 import android.location.OnNmeaMessageListener;
-import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -33,7 +32,9 @@ import androidx.annotation.NonNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * A container for measurement-related API calls. It binds the measurement providers with the
@@ -62,7 +63,6 @@ public class MeasurementProvider {
     private final LocationManager mLocationManager;
     private final android.location.LocationListener mLocationListener =
             new android.location.LocationListener() {
-
                 @Override
                 public void onProviderEnabled(@NonNull String provider) {
                     if (mLogLocations) {
@@ -99,16 +99,29 @@ public class MeasurementProvider {
                         }
                     }
                 }
+            };
 
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
+    private final Consumer<Location> locationConsumer =
+        new Consumer<>() {
+            @Override
+            public void accept(Location location) {
+                if (firstTime && Objects.equals(location.getProvider(), LocationManager.GPS_PROVIDER)) {
                     if (mLogLocations) {
                         for (MeasurementListener logger : mListeners) {
-                            logger.onLocationStatusChanged(provider, status, extras);
+                            firstLocationTimeNanos = SystemClock.elapsedRealtimeNanos();
+                            ttff = firstLocationTimeNanos - registrationTimeNanos;
+                            logger.onTTFFReceived(ttff);
                         }
                     }
+                    firstTime = false;
                 }
-            };
+                if (mLogLocations) {
+                    for (MeasurementListener logger : mListeners) {
+                        logger.onLocationChanged(location);
+                    }
+                }
+            }
+        };
 
     private final com.google.android.gms.location.LocationListener mFusedLocationListener =
             new com.google.android.gms.location.LocationListener() {
@@ -143,15 +156,6 @@ public class MeasurementProvider {
                         }
                     }
                 }
-
-                @Override
-                public void onStatusChanged(int status) {
-                    if (mLogMeasurements) {
-                        for (MeasurementListener logger : mListeners) {
-                            logger.onGnssMeasurementsStatusChanged(status);
-                        }
-                    }
-                }
             };
 
     private final GnssNavigationMessage.Callback gnssNavigationMessageListener =
@@ -161,15 +165,6 @@ public class MeasurementProvider {
                     if (mLogNavigationMessages) {
                         for (MeasurementListener logger : mListeners) {
                             logger.onGnssNavigationMessageReceived(event);
-                        }
-                    }
-                }
-
-                @Override
-                public void onStatusChanged(int status) {
-                    if (mLogNavigationMessages) {
-                        for (MeasurementListener logger : mListeners) {
-                            logger.onGnssNavigationMessageStatusChanged(status);
                         }
                     }
                 }
@@ -302,8 +297,17 @@ public class MeasurementProvider {
         boolean isNetworkProviderEnabled =
                 mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
         if (isNetworkProviderEnabled) {
-            mLocationManager.requestSingleUpdate(
-                    LocationManager.NETWORK_PROVIDER, mLocationListener, null);
+            mLocationManager.getCurrentLocation(
+                LocationManager.NETWORK_PROVIDER,
+                null,
+                Executors.newSingleThreadExecutor(),
+                locationConsumer
+            );
+
+            // DEPRECATED
+//            mLocationManager.requestSingleUpdate(
+//                    LocationManager.NETWORK_PROVIDER, mLocationListener, null);
+
         }
         logRegistration("LocationUpdates", isNetworkProviderEnabled);
     }
@@ -313,7 +317,15 @@ public class MeasurementProvider {
         if (isGpsProviderEnabled) {
             this.firstTime = true;
             registrationTimeNanos = SystemClock.elapsedRealtimeNanos();
-            mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mLocationListener, null);
+
+            // DEPRECATED
+            // mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, mLocationListener, null);
+            mLocationManager.getCurrentLocation(
+                LocationManager.NETWORK_PROVIDER,
+                null,
+                Executors.newSingleThreadExecutor(),
+                locationConsumer
+            );
         }
         logRegistration("LocationUpdates", isGpsProviderEnabled);
     }
@@ -321,7 +333,10 @@ public class MeasurementProvider {
     public void registerMeasurements() {
         logRegistration(
                 "GnssMeasurements",
-                mLocationManager.registerGnssMeasurementsCallback(gnssMeasurementsEventListener));
+                mLocationManager.registerGnssMeasurementsCallback(
+                    Executors.newSingleThreadExecutor(),
+                    gnssMeasurementsEventListener
+                ));
     }
 
     public void unregisterMeasurements() {
@@ -331,7 +346,10 @@ public class MeasurementProvider {
     public void registerNavigation() {
         logRegistration(
                 "GpsNavigationMessage",
-                mLocationManager.registerGnssNavigationMessageCallback(gnssNavigationMessageListener));
+                mLocationManager.registerGnssNavigationMessageCallback(
+                    Executors.newSingleThreadExecutor(),
+                    gnssNavigationMessageListener
+                ));
     }
 
     public void unregisterNavigation() {
@@ -339,15 +357,21 @@ public class MeasurementProvider {
     }
 
     public void registerGnssStatus() {
-        logRegistration("GnssStatus", mLocationManager.registerGnssStatusCallback(gnssStatusListener));
+        logRegistration("GnssStatus", mLocationManager.registerGnssStatusCallback(
+            Executors.newSingleThreadExecutor(),
+            gnssStatusListener
+        ));
     }
 
-    public void unregisterGpsStatus() {
+    public void unregisterGnssStatus() {
         mLocationManager.unregisterGnssStatusCallback(gnssStatusListener);
     }
 
     public void registerNmea() {
-        logRegistration("Nmea", mLocationManager.addNmeaListener(nmeaListener));
+        logRegistration("Nmea", mLocationManager.addNmeaListener(
+            Executors.newSingleThreadExecutor(),
+            nmeaListener
+        ));
     }
 
     public void unregisterNmea() {
@@ -366,7 +390,7 @@ public class MeasurementProvider {
         unregisterLocation();
         unregisterMeasurements();
         unregisterNavigation();
-        unregisterGpsStatus();
+        unregisterGnssStatus();
         unregisterNmea();
     }
 

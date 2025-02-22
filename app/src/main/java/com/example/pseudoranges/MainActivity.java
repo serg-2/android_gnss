@@ -1,11 +1,13 @@
 package com.example.pseudoranges;
 
+import static com.example.pseudoranges.ConstellationEnum.GPS;
+import static com.example.pseudoranges.ConstellationEnum.UNKNOWN;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -15,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -26,13 +27,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 
 import com.example.pseudoranges.models.MainViewModel;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     private static final int LOCATION_REQUEST_ID = 1;
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -40,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     private TextView mainTV1;
     private TextView mainTV2;
+    private TextView mainTV3;
     private static final String TAG = "MainActivity";
     private Spinner constSpinner;
     private CheckBox cbFilter;
@@ -50,8 +50,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     public final MutableLiveData<String> tv1Text = new MutableLiveData<>();
     public final MutableLiveData<String> tv2Text = new MutableLiveData<>();
+    public final MutableLiveData<String> tv3Text = new MutableLiveData<>();
 
-    public final MutableLiveData<String> filterConstellation = new MutableLiveData<>("GPS");
+    public final MutableLiveData<ConstellationEnum> filterConstellation = new MutableLiveData<>(GPS);
     public final MutableLiveData<Integer> filterTime = new MutableLiveData<>(9);
 
     private Timer timer;
@@ -65,16 +66,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         mainTV1 = findViewById(R.id.mainTV1);
         mainTV2 = findViewById(R.id.mainTV2);
+        mainTV3 = findViewById(R.id.mainTV3);
         mainTV1.setTypeface(Typeface.MONOSPACE);
         mainTV2.setTypeface(Typeface.MONOSPACE);
+        mainTV3.setTypeface(Typeface.MONOSPACE);
 
         cbFilter = findViewById(R.id.cbTime);
 
-        constSpinner = findViewById(R.id.const_spinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.constellations_array, android.R.layout.simple_spinner_item);
+        ArrayAdapter<ConstellationEnum> adapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, ConstellationEnum.values());
+
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        constSpinner = findViewById(R.id.const_spinner);
         constSpinner.setAdapter(adapter);
         constSpinner.setOnItemSelectedListener(this);
 
@@ -89,10 +94,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             // Update the UI, in this case, a TextView.
             mainTV2.setText(newName);
         };
+        final Observer<String> tv3Observer = newName -> {
+            // Update the UI, in this case, a TextView.
+            mainTV3.setText(newName);
+        };
 
         tv1Text.observe(this, tv1Observer);
         tv2Text.observe(this, tv2Observer);
-
+        tv3Text.observe(this, tv3Observer);
     }
 
     private void requestPermissionAndSetupFragments(final Activity activity) {
@@ -121,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         mMeasurementProvider.registerMeasurements();
     }
 
+    /* DEPRECATED
+    // implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult result) {
         if (Log.isLoggable(TAG, Log.INFO)) {
@@ -129,14 +140,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
-
-    }
+    public void onConnected(@Nullable Bundle bundle) { }
 
     @Override
-    public void onConnectionSuspended(int cause) {
-
-    }
+    public void onConnectionSuspended(int cause) { }
+     */
 
     @Override
     protected void onPause() {
@@ -148,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
         if (hasPermissions(this)) {
             mMeasurementProvider.unregisterMeasurements();
+            mMeasurementProvider.unregisterGnssStatus();
         }
     }
 
@@ -156,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         super.onResume();
         if (hasPermissions(this)) {
             mMeasurementProvider.registerMeasurements();
+            mMeasurementProvider.registerGnssStatus();
         }
 
         // Timer
@@ -194,7 +204,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     private void updateScreen() {
         tv1Text.postValue(mainViewModel.toStringClockClass());
         // GPS, SBAS, GLONASS, QZSS, BEIDOU, GALILEO
-        tv2Text.postValue(mainViewModel.toStringMeasurementMap(filterConstellation.getValue(), filterTime.getValue()));
+        tv2Text.postValue(mainViewModel.toStringMeasurementMap(filterConstellation.getValue(), filterTime.getValue(), true));
+        tv3Text.postValue(mainViewModel.toStringMeasurementMap(UNKNOWN, 0, false));
     }
 
     public void onCBTimeClicked(View view) {
@@ -207,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        filterConstellation.postValue((String) parent.getItemAtPosition(position));
+        filterConstellation.postValue((ConstellationEnum) parent.getItemAtPosition(position));
         // Log.e("MAIN", "SELECTED: " + position);
     }
 

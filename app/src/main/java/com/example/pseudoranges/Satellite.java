@@ -1,6 +1,8 @@
 package com.example.pseudoranges;
 
-import static com.example.pseudoranges.MyListener.unknown_phase;
+import static com.example.pseudoranges.Consts.UNKNOWN_PHASE;
+
+import androidx.annotation.NonNull;
 
 public class Satellite {
 
@@ -21,20 +23,8 @@ public class Satellite {
     // Optional hasCarrierFrequencyHz
     public float CarrierFrequencyHz;
 
-    // Optional hasCarrierCycles
-    public long CarrierCycles;
-
-    // Optional hasCarrierPhase
-    public double CarrierPhase;
-
-    // Optional hasCarrierPhaseUncertainty
-    public double CarrierPhaseUncertainty;
-
     // Optional hasSnrInDb
     public double SnrInDb;
-
-    // Optional hasAutomaticGainControlLevelDb
-    public double AgcDb;
 
     // Optional hasCarrierFrequencyHz
     public float CarrierFreqHz;
@@ -44,12 +34,25 @@ public class Satellite {
     public double PRTIME_NEW;
     public double PRM;
     public int INDEX;
-    public String BandName;
+    public BandEnum BandName;
 
     // Phase
     public double PhaseShift;
-    public String PHASE = unknown_phase;
+    public String PHASE = UNKNOWN_PHASE;
 
     public long AgeData;
     public boolean Valid;
+
+    // Some New
+    public String DeltaRangeString;
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "Index: %s Valid: %b PRM: %f".formatted(
+            BandName,
+            Valid,
+            PRM
+        );
+    }
 }

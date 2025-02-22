@@ -16,6 +16,7 @@
 
 package com.example.pseudoranges;
 
+import static com.example.pseudoranges.NMEAHelper.parseNmea;
 import static com.example.pseudoranges.StatusChangeHelper.gnssStatusToString;
 
 import android.location.GnssAutomaticGainControl;
@@ -24,6 +25,8 @@ import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.Location;
 import android.util.Log;
+
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.pseudoranges.parsers.ClockParser;
 import com.example.pseudoranges.parsers.MeasurementParser;
@@ -40,10 +43,12 @@ public class MyListener implements MeasurementListener {
 
     private final MeasurementParser measurementParser;
     private final ClockParser clockParser;
+    private final MutableLiveData<Boolean> messageSupport;
 
     public MyListener(MainActivity mainActivity) {
         measurementParser = new MeasurementParser(mainActivity);
         clockParser = new ClockParser(mainActivity);
+        messageSupport = mainActivity.messageSupport;
     }
 
     @Override
@@ -76,40 +81,27 @@ public class MyListener implements MeasurementListener {
 
     @Override
     public void onGnssNavigationMessageReceived(GnssNavigationMessage event) {
+        messageSupport.postValue(Boolean.TRUE);
         Log.e("onGnssNavigationMessageReceived: ", event.toString());
     }
 
     @Override
-    public void onGnssNavigationMessageStatusChanged(int status) {
-        Log.e("onStatusChanged: ", getGnssNavigationMessageStatus(status));
-    }
-
-    @Override
     public void onGnssStatusChanged(GnssStatus gnssStatus) {
-        Log.e("onGnssStatusChanged: ", gnssStatusToString(gnssStatus));
+        // DEBUG
+        Log.d("onGnssStatusChanged: ", gnssStatusToString(gnssStatus));
     }
 
     @Override
     public void onNmeaReceived(long timestamp, String s) {
-        Log.e("onNmeaReceived: ", "timestamp=%d, %s".formatted(
-                timestamp,
-                s
-            )
-        );
+        // Log.e("onNmeaReceived: ", "timestamp=%d, %s".formatted(timestamp,s));
+        if (!parseNmea(s).isEmpty()) {
+            Log.e("NMEA", parseNmea(s));
+        }
     }
 
     @Override
     public void onListenerRegistration(String listener, boolean result) {
         Log.i(TAG, "Listener Registered!");
-    }
-
-    private String getGnssNavigationMessageStatus(int status) {
-        return switch (status) {
-            case GnssNavigationMessage.STATUS_UNKNOWN -> "Status Unknown";
-            case GnssNavigationMessage.STATUS_PARITY_PASSED -> "READY";
-            case GnssNavigationMessage.STATUS_PARITY_REBUILT -> "Status Parity Rebuilt";
-            default -> "<Unknown>";
-        };
     }
 
 }

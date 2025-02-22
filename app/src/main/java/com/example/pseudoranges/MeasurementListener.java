@@ -41,8 +41,6 @@ public interface MeasurementListener {
   void onGnssMeasurementsReceived(GnssMeasurementsEvent event);
   /** @see GnssNavigationMessage.Callback# onGnssNavigationMessageReceived(GnssNavigationMessage) */
   void onGnssNavigationMessageReceived(GnssNavigationMessage event);
-  /** @see GnssNavigationMessage.Callback#onStatusChanged(int) */
-  void onGnssNavigationMessageStatusChanged(int status);
   /** @see GnssStatus.Callback#onSatelliteStatusChanged(GnssStatus) */
   void onGnssStatusChanged(GnssStatus gnssStatus);
   /** Called when the listener is registered to listen to GNSS events */

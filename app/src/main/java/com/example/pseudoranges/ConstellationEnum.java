@@ -7,7 +7,8 @@ public enum ConstellationEnum {
     QZSS(4),
     BEIDOU(5),
     GALILEO(6),
-    UNKNOWN(0);
+    UNKNOWN(0),
+    UNIVERSAL(15);
 
     private final int value;
 

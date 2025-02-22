@@ -162,6 +162,8 @@ public class MeasurementProvider {
             new GnssNavigationMessage.Callback() {
                 @Override
                 public void onGnssNavigationMessageReceived(GnssNavigationMessage event) {
+                    // Xiaomi not support
+                    Log.e(TAG, "Received navigation message!");
                     if (mLogNavigationMessages) {
                         for (MeasurementListener logger : mListeners) {
                             logger.onGnssNavigationMessageReceived(event);
@@ -253,6 +255,7 @@ public class MeasurementProvider {
         return mLogNmeas;
     }
 
+    // Temporary Unused
     public void registerLocation() {
         boolean isGpsProviderEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (isGpsProviderEnabled) {
@@ -343,7 +346,7 @@ public class MeasurementProvider {
         mLocationManager.unregisterGnssMeasurementsCallback(gnssMeasurementsEventListener);
     }
 
-    public void registerNavigation() {
+    public void registerNavigationMessages() {
         logRegistration(
                 "GpsNavigationMessage",
                 mLocationManager.registerGnssNavigationMessageCallback(
@@ -352,7 +355,7 @@ public class MeasurementProvider {
                 ));
     }
 
-    public void unregisterNavigation() {
+    public void unregisterNavigationMessages() {
         mLocationManager.unregisterGnssNavigationMessageCallback(gnssNavigationMessageListener);
     }
 
@@ -381,7 +384,7 @@ public class MeasurementProvider {
     public void registerAll() {
         registerLocation();
         registerMeasurements();
-        registerNavigation();
+        registerNavigationMessages();
         registerGnssStatus();
         registerNmea();
     }
@@ -389,7 +392,7 @@ public class MeasurementProvider {
     public void unregisterAll() {
         unregisterLocation();
         unregisterMeasurements();
-        unregisterNavigation();
+        unregisterNavigationMessages();
         unregisterGnssStatus();
         unregisterNmea();
     }

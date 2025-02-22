@@ -32,6 +32,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+
+    private static final String TAG = "MainActivity";
     private static final int LOCATION_REQUEST_ID = 1;
     private static final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -40,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private TextView mainTV1;
     private TextView mainTV2;
     private TextView mainTV3;
-    private static final String TAG = "MainActivity";
     private Spinner constSpinner;
     private CheckBox cbFilter;
 
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public final MutableLiveData<String> tv1Text = new MutableLiveData<>();
     public final MutableLiveData<String> tv2Text = new MutableLiveData<>();
     public final MutableLiveData<String> tv3Text = new MutableLiveData<>();
+
+    // GNSS Navigation Message Support
+    public final MutableLiveData<Boolean> messageSupport = new MutableLiveData<>(Boolean.FALSE);
 
     public final MutableLiveData<ConstellationEnum> filterConstellation = new MutableLiveData<>(GPS);
     public final MutableLiveData<Integer> filterTime = new MutableLiveData<>(9);
@@ -127,7 +131,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 new MeasurementProvider(
                         getApplicationContext(),
                         myListener);
+
         mMeasurementProvider.registerMeasurements();
+        mMeasurementProvider.registerGnssStatus();
+        mMeasurementProvider.registerNavigationMessages();
+        mMeasurementProvider.registerNmea();
     }
 
     /* DEPRECATED
@@ -157,6 +165,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (hasPermissions(this)) {
             mMeasurementProvider.unregisterMeasurements();
             mMeasurementProvider.unregisterGnssStatus();
+            mMeasurementProvider.unregisterNavigationMessages();
+            mMeasurementProvider.unregisterNmea();
         }
     }
 
@@ -166,6 +176,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (hasPermissions(this)) {
             mMeasurementProvider.registerMeasurements();
             mMeasurementProvider.registerGnssStatus();
+            mMeasurementProvider.registerNavigationMessages();
+            mMeasurementProvider.registerNmea();
         }
 
         // Timer
@@ -202,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private void updateScreen() {
-        tv1Text.postValue(mainViewModel.toStringClockClass());
+        tv1Text.postValue(mainViewModel.toStringClockClass() + "\nGNSS navigation message support: " + messageSupport.getValue());
         // GPS, SBAS, GLONASS, QZSS, BEIDOU, GALILEO
         tv2Text.postValue(mainViewModel.toStringMeasurementMap(filterConstellation.getValue(), filterTime.getValue(), true));
         tv3Text.postValue(mainViewModel.toStringMeasurementMap(UNKNOWN, 0, false));

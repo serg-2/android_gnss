@@ -231,7 +231,7 @@ public class MeasurementParser {
         // Valid or not? > 50 ms
         // nSatellite.Valid = timeFromSignalSecondsFloat > 0.05;
         nSatellite.Valid = fixedState;
-        
+
         if (fixedState) {
             return;
         }
@@ -241,30 +241,8 @@ public class MeasurementParser {
 
         // Some log
         if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GPS &&
-           // (nSatellite.INDEX == 22 || nSatellite.INDEX == 23)&&
+           (nSatellite.INDEX == 22 || nSatellite.INDEX == 23)&&
             nSatellite.BandName.equals(BandEnum.L1)) {
-
-            // STATE_CODE_LOCK
-            if ((nSatellite.State) == 1) {
-                if (measurement.getReceivedSvTimeNanos() * 1e-6 > 0.005 && measurement.getReceivedSvTimeNanos() * 1e-6 < 1) {
-                    someTime = measurement.getReceivedSvTimeNanos();
-                    return;
-                }
-            }
-            //     1                 2              32
-            // STATE_CODE_LOCK STATE_BIT_SYNC STATE_SYMBOL_SYNC
-            if ((nSatellite.State) == 35) {
-                if (measurement.getReceivedSvTimeNanos() * 1e-6 > 8 && measurement.getReceivedSvTimeNanos() * 1e-6 < 20) {
-                    return;
-                }
-            }
-            //      1             2                   4                   8                 16384
-            // STATE_CODE_LOCK STATE_BIT_SYNC STATE_SUBFRAME_SYNC STATE_TOW_DECODED STATE_TOW_KNOWN ~ 156369349.537308
-            if ((nSatellite.State) == 16399) {
-                if (measurement.getReceivedSvTimeNanos() * 1e-9 > .1) {
-                    return;
-                }
-            }
             Log.e("Satellite", "State : " + parseReceivedTimeState(nSatellite.State));
             Log.e("Satellite", "GetReceivedSvTimeSecs(): " + measurement.getReceivedSvTimeNanos() * 1e-9);
             Log.e("Satellite", String.format("Difference: %5.3f сек", prSeconds));

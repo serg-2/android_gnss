@@ -1,6 +1,7 @@
 package com.example.pseudoranges.parsers;
 
 import android.location.GnssClock;
+import android.util.Log;
 
 import com.example.pseudoranges.Clock;
 import com.example.pseudoranges.MainActivity;
@@ -13,10 +14,23 @@ public class ClockParser {
         clock = mainActivity.mainViewModel.gc();
     }
 
-    public void parseClock(GnssClock gnssClock, int sizeOfMeasurements) {
-        clock.AgeData = System.currentTimeMillis();
+    public static final int SECONDS_IN_WEEK = 3600 * 24 * 7;
+    public static final double WEEKS_IN_YEAR = 52.1429;
 
-        clock.TimeNanos = gnssClock.getTimeNanos();
+    public void parseClock(GnssClock gnssClock, int sizeOfMeasurements) {
+        // True MAIN!
+        long nanosSince1980;
+        if (gnssClock.hasFullBiasNanos()) {
+            nanosSince1980 = gnssClock.getFullBiasNanos();
+            clock.FullBiasNanos = nanosSince1980;
+        } else {
+            clock.FullBiasNanos = gnssClock.getFullBiasNanos();
+            return;
+        }
+
+        clock.AgeData = System.currentTimeMillis();
+        clock.BootTimeNanos = gnssClock.getTimeNanos();
+
         clock.HardwareClockDiscontinuityCount = gnssClock.getHardwareClockDiscontinuityCount();
 
         // True
@@ -29,12 +43,7 @@ public class ClockParser {
             clock.TimeUncertaintyNanos = gnssClock.getTimeUncertaintyNanos();
         }
 
-        // True
-        if (gnssClock.hasFullBiasNanos()) {
-            clock.FullBiasNanos = gnssClock.getFullBiasNanos();
-        }
-
-        // True
+        // True. 0?
         if (gnssClock.hasBiasNanos()) {
             clock.BiasNanos = gnssClock.getBiasNanos();
         }
@@ -55,10 +64,10 @@ public class ClockParser {
         }
 
         // Additional
-        double weekNumber = Math.floor(-(gnssClock.getFullBiasNanos() * 1e-9 / 604800));
-        double weekNumberNanos = weekNumber * 604800 * 1e9;
+        double numberOfWeeks = Math.floor(-(nanosSince1980 * 1e-9 / SECONDS_IN_WEEK));
+        double weekNumberNanos = numberOfWeeks * SECONDS_IN_WEEK * 1e9;
 
-        double tRxNanos = gnssClock.getTimeNanos() - gnssClock.getFullBiasNanos() - weekNumberNanos;
+        double tRxNanos = gnssClock.getTimeNanos() - (nanosSince1980 + weekNumberNanos);
 
         if (gnssClock.hasBiasNanos()) {
             tRxNanos = tRxNanos - gnssClock.getBiasNanos();

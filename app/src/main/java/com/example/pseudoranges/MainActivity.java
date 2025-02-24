@@ -1,7 +1,10 @@
 package com.example.pseudoranges;
 
 import static com.example.pseudoranges.ConstellationEnum.GPS;
+import static com.example.pseudoranges.ConstellationEnum.UNIVERSAL;
 import static com.example.pseudoranges.ConstellationEnum.UNKNOWN;
+
+import static java.util.Collections.*;
 
 import android.Manifest;
 import android.app.Activity;
@@ -28,15 +31,20 @@ import androidx.lifecycle.ViewModelStoreOwner;
 
 import com.example.pseudoranges.models.MainViewModel;
 
+import org.orekit.propagation.analytical.gnss.data.GPSAlmanac;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private static final String TAG = "MainActivity";
     private static final int LOCATION_REQUEST_ID = 1;
     private static final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION
+        Manifest.permission.ACCESS_FINE_LOCATION
     };
 
     private TextView mainTV1;
@@ -44,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private TextView mainTV3;
     private Spinner constSpinner;
     private CheckBox cbFilter;
+    private CheckBox validFilter;
 
     private MeasurementProvider mMeasurementProvider;
     private MyListener myListener;
@@ -52,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public final MutableLiveData<String> tv1Text = new MutableLiveData<>();
     public final MutableLiveData<String> tv2Text = new MutableLiveData<>();
     public final MutableLiveData<String> tv3Text = new MutableLiveData<>();
+    public final MutableLiveData<List<GPSAlmanac>> gpsAlmanac = new MutableLiveData<>(emptyList());
 
     // GNSS Navigation Message Support
     public final MutableLiveData<Boolean> messageSupport = new MutableLiveData<>(Boolean.FALSE);
@@ -61,6 +71,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private Timer timer;
     private boolean timerState = false;
+
+    // TEST DEBUG
+    private final Almanac almanac = new Almanac(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,10 +88,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mainTV2.setTypeface(Typeface.MONOSPACE);
         mainTV3.setTypeface(Typeface.MONOSPACE);
 
-        cbFilter = findViewById(R.id.cbTime);
+        cbFilter = findViewById(R.id.hideOld);
+        validFilter = findViewById(R.id.hideValid);
 
-        ArrayAdapter<ConstellationEnum> adapter = new ArrayAdapter<>(this,
-            android.R.layout.simple_spinner_item, ConstellationEnum.values());
+        ArrayAdapter<ConstellationEnum> adapter = new ArrayAdapter<>(
+            this,
+            android.R.layout.simple_spinner_item,
+            Arrays
+                .stream(ConstellationEnum.values())
+                .filter(enumVal -> !enumVal.equals(UNKNOWN))
+                .filter(enumVal -> !enumVal.equals(UNIVERSAL))
+                .toArray(ConstellationEnum[]::new)
+        );
 
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -106,6 +127,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         tv1Text.observe(this, tv1Observer);
         tv2Text.observe(this, tv2Observer);
         tv3Text.observe(this, tv3Observer);
+
+        gpsAlmanac.observe(this, onAlmanacLoad);
+
+        Executors.newSingleThreadExecutor().submit(almanac::loadAlmanac);
     }
 
     private void requestPermissionAndSetupFragments(final Activity activity) {
@@ -128,9 +153,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void setupFragments() {
         myListener = new MyListener(this);
         mMeasurementProvider =
-                new MeasurementProvider(
-                        getApplicationContext(),
-                        myListener);
+            new MeasurementProvider(
+                getApplicationContext(),
+                myListener);
 
         mMeasurementProvider.registerMeasurements();
         mMeasurementProvider.registerGnssStatus();
@@ -191,7 +216,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }, 0, 500);//put here time 1000 milliseconds=1 second
             timerState = true;
         }
+
     }
+
+    private final Observer<List<GPSAlmanac>> onAlmanacLoad = newAlmanac -> {
+        if (gpsAlmanac.getValue().isEmpty()) return;
+        Toast.makeText(this, "Размер загруженного GPS альманаха: " + gpsAlmanac.getValue().size(), Toast.LENGTH_LONG).show();
+    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -200,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             case LOCATION_REQUEST_ID: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         setupFragments();
                     }
@@ -216,11 +247,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void updateScreen() {
         tv1Text.postValue(mainViewModel.toStringClockClass() + "\nGNSS navigation message support: " + messageSupport.getValue());
         // GPS, SBAS, GLONASS, QZSS, BEIDOU, GALILEO
-        tv2Text.postValue(mainViewModel.toStringMeasurementMap(filterConstellation.getValue(), filterTime.getValue(), true));
+        tv2Text.postValue(mainViewModel.toStringMeasurementMap(filterConstellation.getValue(), filterTime.getValue(), validFilter.isChecked()));
         tv3Text.postValue(mainViewModel.toStringMeasurementMap(UNKNOWN, 0, false));
     }
 
-    public void onCBTimeClicked(View view) {
+    public void onHideOldClicked(View view) {
         if (cbFilter.isChecked()) {
             filterTime.postValue(9);
         } else {

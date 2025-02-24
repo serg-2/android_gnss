@@ -34,22 +34,34 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/splitter"
         app:layout_constraintBottom_toTopOf="@id/splitter2"
-        app:layout_constraintEnd_toStartOf="@+id/cbTime"
+        app:layout_constraintEnd_toStartOf="@+id/hideValid"
         app:layout_constraintStart_toStartOf="parent" />
 
     <CheckBox
-        android:id="@+id/cbTime"
-
+        android:id="@+id/hideOld"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hide old"
-        app:layout_constraintStart_toEndOf="@+id/const_spinner"
+        app:layout_constraintStart_toEndOf="@+id/hideValid"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/splitter"
         app:layout_constraintBottom_toTopOf="@id/splitter2"
         android:checked="true"
-        android:onClick="onCBTimeClicked"
+        android:onClick="onHideOldClicked"
         />
+
+    <CheckBox
+        android:id="@+id/hideValid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Valid only"
+        app:layout_constraintStart_toEndOf="@+id/const_spinner"
+        app:layout_constraintEnd_toStartOf="@+id/hideOld"
+        app:layout_constraintTop_toBottomOf="@id/splitter"
+        app:layout_constraintBottom_toTopOf="@id/splitter2"
+        android:checked="true"
+        />
+
 
     <TextView
         android:id="@+id/mainTV2"
@@ -63,7 +75,7 @@
     <TextView
         android:id="@+id/mainTV3"
         android:layout_width="wrap_content"
-        android:layout_height="100dp"
+        android:layout_height="50dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mainTV2"
         app:layout_constraintBottom_toBottomOf="parent"

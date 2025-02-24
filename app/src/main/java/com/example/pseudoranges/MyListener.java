@@ -16,6 +16,7 @@
 
 package com.example.pseudoranges;
 
+import static com.example.pseudoranges.Consts.LOG_GNSS_STATUS_CHANGED;
 import static com.example.pseudoranges.NMEAHelper.parseNmea;
 import static com.example.pseudoranges.StatusChangeHelper.gnssStatusToString;
 
@@ -87,8 +88,9 @@ public class MyListener implements MeasurementListener {
 
     @Override
     public void onGnssStatusChanged(GnssStatus gnssStatus) {
-        // DEBUG
-        Log.d("onGnssStatusChanged: ", gnssStatusToString(gnssStatus));
+        if (LOG_GNSS_STATUS_CHANGED) {
+            Log.d("onGnssStatusChanged: ", gnssStatusToString(gnssStatus));
+        }
     }
 
     @Override

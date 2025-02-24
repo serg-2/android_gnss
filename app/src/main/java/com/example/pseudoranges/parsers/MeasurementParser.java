@@ -213,11 +213,13 @@ public class MeasurementParser {
         }
         // End PhaseShift calculation ---------------------------------------------
 
-        // Log features
-        if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GPS) {
-            //Log.e("Satellite", "tRxSeconds: "+ tRxNanos+ " getReceivedSvTimeNanos(): " + measurement.getReceivedSvTimeNanos());
-            //Log.e("Satellite" , String.format("Difference: %5.3f сек", prSeconds));
-            //Log.e("Satellite" , String.format("PseudoRange: %7.0f км", prm / 1000));
+        // Some log
+        if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GPS &&
+            nSatellite.INDEX == 7 &&
+            nSatellite.BandName.equals(BandEnum.L1)) {
+            Log.e("Satellite", "tRxSeconds: " + tRxSeconds + " getReceivedSvTimeNanos(): " + measurement.getReceivedSvTimeNanos());
+            Log.e("Satellite", String.format("Difference: %5.3f сек", prSeconds));
+            Log.e("Satellite", String.format("PseudoRange: %7.0f км\n", prm / 1000));
         }
     }
 

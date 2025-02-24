@@ -1,5 +1,8 @@
 package com.example.pseudoranges.models;
 
+import static com.example.pseudoranges.parsers.ClockParser.SECONDS_IN_WEEK;
+import static com.example.pseudoranges.parsers.ClockParser.WEEKS_IN_YEAR;
+
 import android.app.Application;
 
 import androidx.annotation.NonNull;
@@ -56,14 +59,17 @@ public class MainViewModel extends AndroidViewModel {
          */
         // Log.e("Clock", "Full Bias Nano: " + clock.FullBiasNanos + " Time Nanos: " + clock.TimeNanos + " bias Nanos: " + clock.BiasNanos);
         return """
-            TimeNanos = %d
+            Time from boot = %.0f
+            Years From 1980 = %.0f
+            
             HardwareClockDiscontinuityCount = %d
             DriftNanosPerSecond = %.3f
             DriftUncertaintyNanosPerSecond = %.3f
-            Age = %d
+            Age = %d sec
             Received Measurements = %d
             """.formatted(
-            clock.TimeNanos,
+            clock.BootTimeNanos * 1e-9,
+            clock.FullBiasNanos * 1e-9 / SECONDS_IN_WEEK / WEEKS_IN_YEAR,
             clock.HardwareClockDiscontinuityCount,
             clock.DriftNanosPerSecond,
             clock.DriftUncertaintyNanosPerSecond,

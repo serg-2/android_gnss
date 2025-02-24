@@ -1,7 +1,7 @@
 package com.example.pseudoranges;
 
 public class Clock {
-    public long TimeNanos;
+    public long BootTimeNanos;
     public int HardwareClockDiscontinuityCount;
 
     // Optional hasLeapSecond

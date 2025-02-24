@@ -119,34 +119,52 @@ public class MeasurementParser {
             receivedNanos = clock.TimeOfReceivedInternalTime;
         }
 
+        // Timings
+        // https://developer.android.com/reference/android/location/GnssMeasurement#getReceivedSvTimeNanos()
+
         // MAIN
         double receivedSecondsFloat = receivedNanos * 1e-9;
 
         // The received satellite time is relative to the beginning of the system week
         // for all constellations
         // except for Glonass where it is relative to the beginning of the Glonass system day.
+
+        // Changes with measurement.getState() during lock.
+        // STEP 1 Only STATE_CODE_LOCK < 1 ms
+        // STEP 2 STATE_SYMBOL_SYNC + STATE_BIT_SYNC < 20 ms
+        // STEP 3 STATE_TOW_DECODED + STATE_TOW_KNOWN < 1 week ( STATE_GLO_TOD_DECODED + STATE_GLO_TOD_KNOWN < 1 day)
         double timeFromSignalSecondsFloat = measurement.getReceivedSvTimeNanos() * 1e-9;
 
-        // GLONASS fixes
-        if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GLONASS) {
-            double tRxSeconds_GLO = receivedSecondsFloat % 86400;
-            double tTxSeconds_GLO = timeFromSignalSecondsFloat - 10800 + LEAP_SECONDS;
-            if (tTxSeconds_GLO < 0) {
-                tTxSeconds_GLO = tTxSeconds_GLO + 86400;
-            }
-            receivedSecondsFloat = tRxSeconds_GLO;
-            timeFromSignalSecondsFloat = tTxSeconds_GLO;
-        }
+        boolean fixedState = (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GLONASS) &&
+            checkReceivedTimeState(measurement.getState(), STATE_GLO_TOD_KNOWN) ||
+            (measurement.getConstellationType() != GnssStatus.CONSTELLATION_GLONASS) &&
+                checkReceivedTimeState(measurement.getState(), STATE_TOW_KNOWN);
 
-        // BEIDOU fixes
-        if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_BEIDOU) {
-            double tRxSeconds_BDS = receivedSecondsFloat;
-            double tTxSeconds_BDS = timeFromSignalSecondsFloat + LEAP_SECONDS - 4;
-            if (tTxSeconds_BDS > 604800) {
-                tTxSeconds_BDS = tTxSeconds_BDS - 604800;
+        nSatellite.Valid = fixedState;
+
+        // Need fixes only for FIXED state
+        if (fixedState) {
+            // GLONASS fixes
+            if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GLONASS) {
+                double tRxSeconds_GLO = receivedSecondsFloat % 86400;
+                double tTxSeconds_GLO = timeFromSignalSecondsFloat - 10800 + LEAP_SECONDS;
+                if (tTxSeconds_GLO < 0) {
+                    tTxSeconds_GLO = tTxSeconds_GLO + 86400;
+                }
+                receivedSecondsFloat = tRxSeconds_GLO;
+                timeFromSignalSecondsFloat = tTxSeconds_GLO;
             }
-            receivedSecondsFloat = tRxSeconds_BDS;
-            timeFromSignalSecondsFloat = tTxSeconds_BDS;
+
+            // BEIDOU fixes
+            if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_BEIDOU) {
+                double tRxSeconds_BDS = receivedSecondsFloat;
+                double tTxSeconds_BDS = timeFromSignalSecondsFloat + LEAP_SECONDS - 4;
+                if (tTxSeconds_BDS > 604800) {
+                    tTxSeconds_BDS = tTxSeconds_BDS - 604800;
+                }
+                receivedSecondsFloat = tRxSeconds_BDS;
+                timeFromSignalSecondsFloat = tTxSeconds_BDS;
+            }
         }
 
         double prSeconds = receivedSecondsFloat - timeFromSignalSecondsFloat;
@@ -221,23 +239,9 @@ public class MeasurementParser {
         }
         // End PhaseShift calculation ---------------------------------------------
 
-        boolean fixedState = (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GLONASS) &&
-            checkReceivedTimeState(measurement.getState(), STATE_GLO_TOD_KNOWN) ||
-            (measurement.getConstellationType() != GnssStatus.CONSTELLATION_GLONASS) &&
-                checkReceivedTimeState(measurement.getState(), STATE_TOW_KNOWN);
-
-        // Old valid
-        // Check Valid here
-        // Valid or not? > 50 ms
-        // nSatellite.Valid = timeFromSignalSecondsFloat > 0.05;
-        nSatellite.Valid = fixedState;
-
         if (fixedState) {
             return;
         }
-
-        // Timings
-        // https://developer.android.com/reference/android/location/GnssMeasurement#getReceivedSvTimeNanos()
 
         // Some log
         if (measurement.getConstellationType() == GnssStatus.CONSTELLATION_GPS &&

@@ -1,7 +1,6 @@
 package com.example.pseudoranges.parsers;
 
 import android.location.GnssClock;
-import android.util.Log;
 
 import com.example.pseudoranges.Clock;
 import com.example.pseudoranges.MainActivity;
@@ -11,25 +10,27 @@ public class ClockParser {
     private final Clock clock;
 
     public ClockParser(MainActivity mainActivity) {
-        clock = mainActivity.mainViewModel.gc();
+        this.clock = mainActivity.mainViewModel.gc();
     }
 
     public static final int SECONDS_IN_WEEK = 3600 * 24 * 7;
     public static final double WEEKS_IN_YEAR = 52.1429;
 
-    public void parseClock(GnssClock gnssClock, int sizeOfMeasurements) {
-        // True MAIN!
+    public void parseClock(GnssClock gnssClock) {
+        clock.BootTimeNanos = gnssClock.getTimeNanos();
+        clock.AgeData = System.currentTimeMillis();
+
+        // MAIN! True, if possible to calculate. Almanacs? ephemeris?
         long nanosSince1980;
         if (gnssClock.hasFullBiasNanos()) {
             nanosSince1980 = gnssClock.getFullBiasNanos();
-            clock.FullBiasNanos = nanosSince1980;
+            clock.EmulatedTime = false;
         } else {
-            clock.FullBiasNanos = gnssClock.getFullBiasNanos();
-            return;
+            nanosSince1980 = emulateFullBiasNanos(clock.AgeData, clock.BootTimeNanos);
+            clock.EmulatedTime = true;
         }
+        clock.FullBiasNanos = nanosSince1980;
 
-        clock.AgeData = System.currentTimeMillis();
-        clock.BootTimeNanos = gnssClock.getTimeNanos();
 
         clock.HardwareClockDiscontinuityCount = gnssClock.getHardwareClockDiscontinuityCount();
 
@@ -67,18 +68,32 @@ public class ClockParser {
         double numberOfWeeks = Math.floor(-(nanosSince1980 * 1e-9 / SECONDS_IN_WEEK));
         double weekNumberNanos = numberOfWeeks * SECONDS_IN_WEEK * 1e9;
 
-        double tRxNanos = gnssClock.getTimeNanos() - (nanosSince1980 + weekNumberNanos);
+        double timeReceivedInternalReceiver = gnssClock.getTimeNanos() - (nanosSince1980 + weekNumberNanos);
 
         if (gnssClock.hasBiasNanos()) {
-            tRxNanos = tRxNanos - gnssClock.getBiasNanos();
+            timeReceivedInternalReceiver = timeReceivedInternalReceiver - gnssClock.getBiasNanos();
         }
 
-        clock.TRxNanos = tRxNanos;
+        // Main Received time in ns. Local GNSS receiver internal Time.
+        clock.TimeOfReceivedInternalTime = timeReceivedInternalReceiver;
 
         // 251
         //gnssClock.getHardwareClockDiscontinuityCount();
+    }
 
-        clock.ReceivedMeasurements = sizeOfMeasurements;
+    private long emulateFullBiasNanos(long millisSystem, long nanosFromBoot) {
+        // Millis System
+        // UTC midnight, January 1, 1970 UTC
+
+        // Nanos in Full Bias (minus sign)
+        // GPS time since 0000Z, January 6, 1980, in nanoseconds.
+
+        // Don't know from where 18 extra seconds.
+        long fixMillis = 17359L;
+
+        final long millisBetween = (long) (3650 + 1 + 1 + 5) * 24 * 3600 * 1000 ;
+
+        return -1 * ((millisSystem - millisBetween + fixMillis) * 1000_000 - nanosFromBoot);
     }
 
 }

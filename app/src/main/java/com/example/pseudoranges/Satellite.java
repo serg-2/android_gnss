@@ -8,6 +8,7 @@ public class Satellite {
 
     public double TimeOffsetNanos;
     public int State;
+    // Main time of receiving from signal
     public long ReceivedSvTimeNanos;
     public long ReceivedSvTimeUncertaintyNanos;
     public double Cn0DbHz;

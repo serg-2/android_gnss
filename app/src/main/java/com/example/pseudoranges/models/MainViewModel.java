@@ -1,12 +1,10 @@
 package com.example.pseudoranges.models;
 
-import static com.example.pseudoranges.parsers.ClockParser.SECONDS_IN_WEEK;
-import static com.example.pseudoranges.parsers.ClockParser.WEEKS_IN_YEAR;
-
 import android.app.Application;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.pseudoranges.Clock;
 import com.example.pseudoranges.ConstellationEnum;
@@ -18,6 +16,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 
 public class MainViewModel extends AndroidViewModel {
 
@@ -36,6 +36,9 @@ public class MainViewModel extends AndroidViewModel {
      */
     private final Map<ConstellationEnum, Map<Integer, Map<BandEnum, Satellite>>> measurement = new LinkedHashMap<>();
     private final Clock clock = new Clock();
+    // Number of received measurements at this time
+    @Getter
+    private final MutableLiveData<Integer> numberOfReceivedMeasurements = new MutableLiveData<>(0);
 
     public MainViewModel(@NonNull Application application) {
         super(application);
@@ -60,7 +63,7 @@ public class MainViewModel extends AndroidViewModel {
         // Log.e("Clock", "Full Bias Nano: " + clock.FullBiasNanos + " Time Nanos: " + clock.TimeNanos + " bias Nanos: " + clock.BiasNanos);
         return """
             Time from boot = %.0f
-            Years From 1980 = %.0f
+            Time Emulated? = %b
             
             HardwareClockDiscontinuityCount = %d
             DriftNanosPerSecond = %.3f
@@ -69,12 +72,12 @@ public class MainViewModel extends AndroidViewModel {
             Received Measurements = %d
             """.formatted(
             clock.BootTimeNanos * 1e-9,
-            clock.FullBiasNanos * 1e-9 / SECONDS_IN_WEEK / WEEKS_IN_YEAR,
+            clock.EmulatedTime,
             clock.HardwareClockDiscontinuityCount,
             clock.DriftNanosPerSecond,
             clock.DriftUncertaintyNanosPerSecond,
             (System.currentTimeMillis() - clock.AgeData) / 1000,
-            clock.ReceivedMeasurements
+            numberOfReceivedMeasurements.getValue()
         );
     }
 

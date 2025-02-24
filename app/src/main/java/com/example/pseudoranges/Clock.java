@@ -1,7 +1,13 @@
 package com.example.pseudoranges;
 
 public class Clock {
+    // Nanoseconds from boot
     public long BootTimeNanos;
+    // Millis from last success
+    public long AgeData;
+    // Time was emulated? Or from gnss receiver
+    public boolean EmulatedTime = false;
+
     public int HardwareClockDiscontinuityCount;
 
     // Optional hasLeapSecond
@@ -25,11 +31,8 @@ public class Clock {
     // Optional hasDriftUncertaintyNanosPerSecond
     public double DriftUncertaintyNanosPerSecond;
 
-    // Additional
-    public double TRxNanos;
-    public long AgeData;
+    // time Of received By receiver
+    public double TimeOfReceivedInternalTime;
 
-    // New
-    public int ReceivedMeasurements;
 }
 

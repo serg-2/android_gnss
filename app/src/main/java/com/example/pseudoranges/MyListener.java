@@ -45,11 +45,13 @@ public class MyListener implements MeasurementListener {
     private final MeasurementParser measurementParser;
     private final ClockParser clockParser;
     private final MutableLiveData<Boolean> messageSupport;
+    private final MutableLiveData<Integer> receivedMeasurements;
 
     public MyListener(MainActivity mainActivity) {
-        measurementParser = new MeasurementParser(mainActivity);
-        clockParser = new ClockParser(mainActivity);
-        messageSupport = mainActivity.messageSupport;
+        this.measurementParser = new MeasurementParser(mainActivity);
+        this.clockParser = new ClockParser(mainActivity);
+        this.messageSupport = mainActivity.messageSupport;
+        this.receivedMeasurements = mainActivity.mainViewModel.getNumberOfReceivedMeasurements();
     }
 
     @Override
@@ -73,8 +75,9 @@ public class MyListener implements MeasurementListener {
 
     @Override
     public void onGnssMeasurementsReceived(GnssMeasurementsEvent event) {
+        receivedMeasurements.postValue(event.getMeasurements().size());
         // FIRST! Parse Clock
-        clockParser.parseClock(event.getClock(), event.getMeasurements().size());
+        clockParser.parseClock(event.getClock());
         // Unused
         Collection<GnssAutomaticGainControl> controls = event.getGnssAutomaticGainControls();
         event.getMeasurements().forEach(measurementParser::parseMeasurement);

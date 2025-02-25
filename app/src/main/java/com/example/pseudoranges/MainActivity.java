@@ -33,6 +33,7 @@ import com.example.pseudoranges.models.MainViewModel;
 
 import org.orekit.propagation.analytical.gnss.data.GPSAlmanac;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
@@ -220,8 +221,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     private final Observer<List<GPSAlmanac>> onAlmanacLoad = newAlmanac -> {
-        if (gpsAlmanac.getValue().isEmpty()) return;
+        if (gpsAlmanac.getValue().isEmpty()) {
+            Toast.makeText(this, "Альманах не загружен!", Toast.LENGTH_LONG).show();
+            return;
+        }
         Toast.makeText(this, "Размер загруженного GPS альманаха: " + gpsAlmanac.getValue().size(), Toast.LENGTH_LONG).show();
+        // Almanac functions
+        almanac.almanacFunction1(Instant.now(), 11);
     };
 
     @Override
